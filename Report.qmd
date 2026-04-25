@@ -1,0 +1,301 @@
+---
+title: "Report primo progetto"
+format: pdf
+execute:
+  echo: false
+  warning: false
+---
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+```
+
+# INTRODUZIONE AL PROGETTO
+Il progetto volge a dimostrare la velocità della programmazione in parallelo rispetto ad una programmazione in serie.
+
+## COSA FA IL PROGRAMMA
+### CREAZIONE DEI DATI
+Il programma genera un segnale periodico con rumore "bianco" (all'interno del file **iniz.cpp**).
+ 
+```cpp
+for(int i = 0; i < grand_vet; i++){
+    vet[i] = (amp * sin(i/periodo)) + aggiunta_rumore(gen, amp);
+}
+```
+
+Per riproducibilità è stato fissato un seed di generazione, quindi il rumore sarà sempre lo stesso.
+
+```cpp 
+mt19937 gen(11);
+```
+
+Nello specifico è stata usata una distribuzione uniforme dalla libreria random per creare il rumore (all'interno del file **iniz.cpp**).
+
+```cpp 
+double ampiezza_rumore = amp / 5.0;                                         
+uniform_real_distribution<double> dist(-ampiezza_rumore, ampiezza_rumore);  
+return dist(gen); 
+```
+
+### CALCOLO SMA
+In seguito è stata calcolata una SMA(Simple Moving Avarage) che consiste nel fare la media degli ultimi tot numeri decisi dall'utente (il parmaetro all'interno del programma è **WINDOW**). Questo passo è quello che è stato parallelizzato, all'interno del file: **indicator.cppp** (per **OpenMP**) e **cuda.cu** (per **CUDA**).
+Il risultato è un segnale con un rumore minore, ma con un offset rispetto a quello iniziale.
+
+```{python}
+#| echo: false
+#| label: fig-segnali
+#| fig-cap: "Confronto dei due segnali"
+
+# Carichiamo i dati
+df = pd.read_csv("output.csv", header=None)
+
+# Assegniamo nomi sensati alle colonne (Segnale A e Segnale B)
+df.columns = ["Segnale_1", "Segnale_2"]
+
+plt.figure(figsize=(10, 5))
+
+# Plot del primo segnale
+plt.plot(df["Segnale_1"], label="Canale 1", alpha=0.8)
+
+# Plot del secondo segnale
+plt.plot(df["Segnale_2"], label="Canale 2", alpha=0.8)
+
+plt.title("Analisi Temporale dei Segnali")
+plt.xlabel("Campioni (n)")
+plt.ylabel("Ampiezza")
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.6)
+
+plt.show()
+```
+
+#### COSA SERVE UN SMA
+Un ambito conosciuto è il trading, dove con l'aiuto di questo strumento si può diminuire il rumore dei mercati finanziari, aiutando la comprensione di questi.
+
+#### COME È CALCOLATA
+Come accennato sopra è stato fatto in modi diversi. Precisamente sono stati utilizzati tre metodi, due con **OpenMP** e uno per **CUDA**.
+
+##### Ciclo esterno (OpenMP)
+Nel **Makefile** è stato nominato **outer**, indica che la parallelizzazione è stata fatta sul ciclo esterno quindi quello più grande.
+
+```cpp
+double start = omp_get_wtime(); 
+
+#pragma omp parallel for schedule(runtime)
+for(int i = 0; i < len; i++){
+    double sum = 0; 
+    int index = i + window - 1; 
+    for(int j = index; j >= i; j--){
+        sum += vet[j];
+    }
+    sma[i] = sum / window;
+} 
+double stop = omp_get_wtime(); 
+return stop - start;
+```
+
+##### Ciclo interno (OpenMP)
+Nel **Makefile** è stato nominato **intern**, indica che la parallelizzazione è stata fatta sul ciclo interno quindi quello più piccolo.
+
+```cpp
+double start = omp_get_wtime(); 
+
+for(int i = 0; i < len; i++){
+    double sum = 0; 
+    int index = i + window - 1; 
+
+    #pragma omp parallel for reduction(+:sum) schedule(runtime)
+    for(int j = index; j >= i; j--){
+        sum += vet[j];
+    }
+
+    sma[i] = sum / window;
+}
+
+double stop = omp_get_wtime(); 
+return stop - start;
+```
+
+##### CUDA
+Nel **Makefile** è stato nominato **CUDA**.
+
+```cpp
+int i = blockIdx.x * blockDim.x + threadIdx.x; 
+
+if (i < len) { 
+    double sum = 0.0;
+    int index_fine = i + window - 1; 
+    for (int j = index_fine; j >= i; j--) {
+        sum += vet[j];
+    }
+    sma[i] = sum / (double)window;
+}
+```
+
+### DATI RACCOLTI
+
+I dati sono stati inseriti in un file denominato **dati.csv** e riportati sottostante.
+
+```{python}
+#| echo: false
+#| label: tabella_dati
+#| fig-cap: "Tabella dati"
+
+df = pd.read_csv("dati.csv")
+
+# Creazione di uno stile
+styled_df = df.style.format({
+    'tempo_medio': '{:.6f}',
+    'tempo_min': '{:.6f}',
+    'tempo_max': '{:.6f}'
+}).background_gradient(subset=['tempo_medio'], cmap='Reds') \
+  .set_caption("Confronto performance (tempi in secondi)") \
+  .hide(axis="index")
+
+styled_df
+```
+
+# SPEED-UP
+Lo **Speed-up** è calcolato come:
+$$
+S_{up} = \frac{S_{base}}{S_{calc}}
+$$
+
+Indica quanto veloce è laparallelizzazione rispetto al programma eseguito sequenzialmente.
+
+## Ciclo esterno
+
+```{python}
+#| echo: false
+#| label: tbl-speedup-outer
+#| tbl-cap: "Speed-up delle implementazioni Outer (solo test con carico di lavoro coerente)"
+
+# Caricamento dati
+df = pd.read_csv("dati.csv")
+
+# 1. Filtriamo solo i 'outer' e scartiamo il primo record (quello con num_cili_per_rep minore)
+# Usiamo il valore standard di num_cili_per_rep per questo benchmark: 1075576320
+df_outer = df[(df['tipo'] == 'outer') & (df['num_cili_per_rep'] == 1075576320)].copy()
+
+# 2. Calcoliamo lo speed-up
+# Prendiamo come riferimento (T_base) il tempo medio più alto registrato per 'outer'
+t_base = df_outer['tempo_medio'].max()
+
+df_outer['speed_up'] = t_base / df_outer['tempo_medio']
+
+# 3. Pulizia della tabella per il report
+# Nota: nei tuoi dati i thread sono segnati come 0 per la CPU, 
+# se hai dati con thread diversi verranno raggruppati qui.
+df_table = df_outer[['tipo', 'threads', 'tempo_medio', 'speed_up']].copy()
+
+# Arrotondamento per leggibilità
+df_table['tempo_medio'] = df_table['tempo_medio'].round(4)
+df_table['speed_up'] = df_table['speed_up'].round(2)
+
+# Rinominiamo le colonne per chiarezza
+df_table.columns = ['Tipo', 'Threads', 'Tempo Medio (s)', 'Speed-up']
+
+# Visualizzazione
+df_table.sort_values(by='Threads', ascending=True)
+```
+
+Da questa tabella si nota che il test migliore ha otttenuto uno **Speed-up** di `python f"{df_table['speed_up'].max():.2f}"`.
+
+Inizialmente lo Speed-up è circa due volte superiore a quello del numero di Thread inferiore quindi un andamento lineare.
+
+```{python}
+#| echo: false
+#| label: fig-speedup-uniform
+#| fig-cap: "Speed-up Outer con distribuzione uniforme sull'asse X"
+
+# 1. Caricamento e Filtro
+df = pd.read_csv("dati.csv")
+df_outer = df[(df['tipo'] == 'outer') & (df['num_cili_per_rep'] == 1075576320)].copy()
+
+# 2. Calcolo Speed-up
+t_base = df_outer['tempo_medio'].max()
+df_outer['speed_up'] = t_base / df_outer['tempo_medio']
+
+# Ordiniamo per thread per coerenza nel disegno della linea
+df_outer = df_outer.sort_values(by='threads')
+
+# 3. Creazione asse X uniforme
+# Usiamo un range semplice (0, 1, 2...) invece dei valori reali dei thread
+x_uniform = range(len(df_outer))
+# Creiamo le etichette per i thread (es: "1", "2", "4"...)
+labels = df_outer['threads'].astype(str).tolist()
+
+# 4. Grafico
+plt.figure(figsize=(10, 6))
+
+plt.plot(x_uniform, df_outer['speed_up'], 
+         marker='o', 
+         linestyle='-', 
+         linewidth=2, 
+         markersize=8, 
+         color='#2c3e50', 
+         label='Speed-up Outer')
+
+# Aggiungiamo i valori numerici dello speed-up sopra i punti
+for i, val in enumerate(df_outer['speed_up']):
+    plt.text(i, val + 0.05, f'{val:.2f}', ha='center', fontweight='bold')
+
+# Impostiamo le etichette dell'asse X in modo che siano uniformi
+plt.xticks(x_uniform, labels)
+
+plt.title('Andamento Speed-up', fontsize=14)
+plt.xlabel('Numero di Thread', fontsize=12)
+plt.ylabel('Speed-up', fontsize=12)
+
+plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+plt.legend()
+
+plt.show()
+```
+
+Come si può notare fino a 16 Thread la velocità ha continuato a salire, anche se da 8 a 16 non è raddoppiata, poi è scesa stabilizzandosi.
+Questo fenomeno è dovuto al fatto che il processore utilizzato è un **Intel(R) Core(TM) Ultra 7 255H** che ha 16 core fisici ed un thread per core, quindi nel momento in cui vengono superati i "limiti fisici", non si notano più miglioramenti, anzi un leggero peggioramento.
+
+
+### Confronto tra scheduling
+Il miglior **schedule** usato è static perché divide il lavoro tra i vari thread inizialmente e non in corso d'opera, eliminando cos l'overhead. Funziona meglio in questo caso perché i thread hanno sempre lo stesso numero di operazioni e dividere il lavoro precedentemente riporta un aumento delle prestazioni, come si può vedere nel seguente grafico
+
+```{python}
+#| echo: false
+#| label: fig-speedup-uniform
+#| fig-cap: "Speed-up Outer con distribuzione uniforme sull'asse X"
+
+# 3. Preparazione dati per il boxplot
+# Creiamo una lista di array, uno per ogni tipo di scheduling
+sched_types = ['static', 'dynamic', 'guided']
+data_to_plot = [df_outer[df_outer['scheduling'] == s]['speed_up'] for s in sched_types]
+
+# Rimuoviamo eventuali liste vuote se uno scheduling manca nel CSV
+data_to_plot = [d for d in data_to_plot if not d.empty]
+labels_to_plot = [s for s in sched_types if not df_outer[df_outer['scheduling'] == s].empty]
+
+# 4. Grafico
+plt.figure(figsize=(10, 6))
+
+# Creazione del boxplot
+box = plt.boxplot(data_to_plot, 
+                  labels=labels_to_plot, 
+                  patch_artist=True, 
+                  medianprops={'color': 'black', 'linewidth': 2})
+
+# Coloriamo i box per distinguerli
+colors = ['#3498db', '#e74c3c', '#2ecc71']
+for patch, color in zip(box['boxes'], colors):
+    patch.set_facecolor(color)
+    patch.set_alpha(0.7)
+
+plt.title('Distribuzione Speed-up per Strategia di Scheduling', fontsize=14)
+plt.ylabel('Speed-up ($T_{max} / T_{i}$)', fontsize=12)
+plt.xlabel('Tipo di Scheduling', fontsize=12)
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+
+plt.show()
+```
+
