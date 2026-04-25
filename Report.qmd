@@ -10,6 +10,15 @@ execute:
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+
+# Carichiamo il dataset principale una volta per tutte
+df_globale = pd.read_csv("dati.csv")
+
+# Calcoliamo lo speed-up generale per gli outer subito
+df_outer_all = df_globale[(df_globale['tipo'] == 'outer') & (df_globale['num_cili_per_rep'] == 1075576320)].copy()
+if not df_outer_all.empty:
+    t_ref = df_outer_all['tempo_medio'].max()
+    df_outer_all['speed_up'] = t_ref / df_outer_all['tempo_medio']
 ```
 
 # INTRODUZIONE AL PROGETTO
@@ -47,6 +56,7 @@ Il risultato è un segnale con un rumore minore, ma con un offset rispetto a que
 #| echo: false
 #| label: fig-segnali
 #| fig-cap: "Confronto dei due segnali"
+#| fig-pos: 'H'
 
 # Carichiamo i dati
 df = pd.read_csv("output.csv", header=None)
@@ -77,7 +87,151 @@ Un ambito conosciuto è il trading, dove con l'aiuto di questo strumento si può
 #### COME È CALCOLATA
 Come accennato sopra è stato fatto in modi diversi. Precisamente sono stati utilizzati tre metodi, due con **OpenMP** e uno per **CUDA**.
 
-##### Ciclo esterno (OpenMP)
+### SPIEGAZIONE MAIN
+
+```cpp
+Inizialmente sono stati salvati i dati in input al main.
+if(argc != 8){                                                              
+    cerr << "Errore! Numero argomenti sbagliato\n";
+    return 1;
+}
+
+const int GRAND_VET = stoi(argv[1]);                                       
+const int WINDOW = stoi(argv[2]);
+string func_type = argv[3];
+const int THREADS = stoi(argv[4]);
+const int REPS = stoi(argv[5]);
+const bool STMP = stoi(argv[6]);
+string schedule = argv[7];
+```
+
+Dopo son stati creati i vettori, quello principale e quello per l'**SMA**. I vettori sono stati creati allocando dinamicamente la memoria perché la grandezza non è fissa.
+La funzione **stampa** serviva inizialmente per controllare i valori, stampa solo su terminale il vettore appena creato nella funzione **inizializzazione** (spiegata precedentemente).
+
+```cpp
+double* vet = new double[GRAND_VET];                                        
+inizializzazione(vet, AMP, GRAND_VET, PERIODO);                             
+
+//stampa(vet, GRAND_VET);                                                   
+
+int len = GRAND_VET - WINDOW;                                               
+double* sma = new double[len];
+```
+
+La parte di CUDA è separata da OpenMP. Si è avuto bisogno di allocare la memoria **cudaMalloc**, copiarla nella GPU **cudaMemcpy**. Poi calcolare i numeri di blocchi da usare con la variabile **blocks** calcolata come $B = \frac{L_{vettore}+N_{thread}-1}{N_{thread}}$.
+Una volta lanciato il kernel si è fatta la sincronizzazione per misurare il tempo.
+In fine con **cudaMemcpy** si sono riportati i valori sulla RAM ed infine si è liberata la memoria.
+
+```cpp
+if (func_type == "CUDA") {
+    double* d_vet = nullptr;
+    double* d_sma = nullptr;
+
+    cudaMalloc(&d_vet, GRAND_VET * sizeof(double));                             
+    cudaMalloc(&d_sma, len * sizeof(double));       
+    
+    cudaMemcpy(d_vet, vet, GRAND_VET * sizeof(double), cudaMemcpyHostToDevice); 
+
+    int blocks = (len + THREADS - 1) / THREADS;                                 
+
+    cout << "Numero: blocchi GPU: " << blocks << endl;
+
+    for (int i = 0; i < REPS; i++) {
+        double start = omp_get_wtime();
+        
+        lancia_kernel_SMA(d_sma, d_vet, len, WINDOW, blocks, THREADS);          
+        
+        cudaDeviceSynchronize();                                                
+        tempo = omp_get_wtime() - start;
+
+        tempo_tot += tempo;
+        if(tempo < temp_min) temp_min = tempo;
+        if(tempo > temp_max) temp_max = tempo;
+    }
+
+cudaMemcpy(sma, d_sma, len * sizeof(double), cudaMemcpyDeviceToHost);       
+
+cudaFree(d_vet);                                                            
+cudaFree(d_sma);
+```
+La parte di OpenMP è meno complicata.
+
+```cpp
+for (int i = 0; i < REPS; i++) {
+    if(func_type == "outer") tempo = SMA_out(sma, vet, len, WINDOW);        
+    else if(func_type == "intern") tempo = SMA_in(sma, vet, len, WINDOW);   
+    
+    tempo_tot += tempo;
+    if(tempo < temp_min) temp_min = tempo;
+    if(tempo > temp_max) temp_max = tempo;
+}
+```
+
+Infine si sono salvati tutti i dati nei file e stampati su terminale e si è liberata la memoria.
+
+```cpp
+long long num_cicli = (long long)(GRAND_VET - WINDOW) * (WINDOW + 1);       
+cout << "Num. di cicli per singolo test(senza REPS): " << num_cicli << endl;
+
+cout << "Il tempo di esecuzione totale del calcolo dell'SMA e': " << tempo_tot << endl;
+cout << "Il tempo di esecuzione medio del calcolo dell'SMA e': " << tempo_tot/REPS << endl;
+cout << "Il tempo min e': " << temp_min << endl;
+cout << "Il tempo max e': " << temp_max << endl;
+
+ifstream check_file("dati.csv");                                            
+bool file_vuoto = check_file.peek() == ifstream::traits_type::eof();        
+check_file.close();
+
+ofstream dati_csv("dati.csv", ios::app);                                   
+
+if (!dati_csv.is_open()) {                                                 
+    cerr << "Il file non è aperto\n";
+    return 1;
+}
+
+if (file_vuoto) {                                                           
+    dati_csv << "tipo,schedule,threads,grand_vet,window,num_cili_per_rep,reps,tempo_medio,tempo_min,tempo_max\n";
+}
+
+if(STMP == 1){
+    dati_csv << func_type << ",";
+    dati_csv << schedule << ",";
+    dati_csv << THREADS << ",";
+    dati_csv << GRAND_VET << ",";
+    dati_csv << WINDOW << ",";
+    dati_csv << num_cicli << ",";
+    dati_csv << REPS << ",";
+    dati_csv << tempo_tot/REPS << ",";
+    dati_csv << temp_min << ",";
+    dati_csv << temp_max << endl;
+}
+
+//stampa(sma, len);                                                        
+
+ofstream out_csv("output.csv");
+
+if (!out_csv.is_open()) {
+    cerr << "Il file non è aperto\n";
+    return 1;
+}
+
+for(int i = WINDOW; i < STAMPA + WINDOW; i++){                            
+    out_csv << vet[i] << ",";                                              
+    out_csv << sma[i - WINDOW];                                             
+    out_csv << endl;  
+}
+
+out_csv.close();                          
+
+delete[] vet;                                                         
+delete[] sma;                                                              
+
+cout << "Programma Finito!\n";
+
+return 0;
+```
+
+#### Ciclo esterno (OpenMP) Funzione
 Nel **Makefile** è stato nominato **outer**, indica che la parallelizzazione è stata fatta sul ciclo esterno quindi quello più grande.
 
 ```cpp
@@ -96,7 +250,7 @@ double stop = omp_get_wtime();
 return stop - start;
 ```
 
-##### Ciclo interno (OpenMP)
+#### Ciclo interno (OpenMP) Funzione
 Nel **Makefile** è stato nominato **intern**, indica che la parallelizzazione è stata fatta sul ciclo interno quindi quello più piccolo.
 
 ```cpp
@@ -118,7 +272,7 @@ double stop = omp_get_wtime();
 return stop - start;
 ```
 
-##### CUDA
+#### CUDA Funzione
 Nel **Makefile** è stato nominato **CUDA**.
 
 ```cpp
@@ -142,6 +296,7 @@ I dati sono stati inseriti in un file denominato **dati.csv** e riportati sottos
 #| echo: false
 #| label: tabella_dati
 #| fig-cap: "Tabella dati"
+#| fig-pos: 'H'
 
 df = pd.read_csv("dati.csv")
 
@@ -157,7 +312,59 @@ styled_df = df.style.format({
 styled_df
 ```
 
-# SPEED-UP
+## DIFFICOLTA' DEL PROBLEMA
+Come si può notare dal grafico sottostante la difficoltà cresce linearmente con la grandezza del vettore
+```{python}
+#| echo: false
+#| label: fig-scaling-vector-size
+#| fig-cap: "Analisi della scalabilità rispetto alla dimensione del vettore"
+#| fig-pos: 'H'
+
+# 1. Caricamento dati
+df = pd.read_csv("dati.csv")
+
+# 2. Filtro: Solo 'outer', window = 256
+# Nota: usiamo il nome della colonna 'grand_vet' come richiesto
+df_plot = df[
+    (df['tipo'] == 'outer') & 
+    (df['window'] == 256)
+].copy()
+
+# 3. Preparazione Grafico
+plt.figure(figsize=(10, 6))
+
+# Identifichiamo i vari thread per tracciare una linea per ognuno
+# (Altrimenti avresti troppi punti sovrapposti)
+threads_presenti = sorted(df_plot['threads'].unique())
+colors = plt.cm.viridis(np.linspace(0, 1, len(threads_presenti)))
+
+for i, t in enumerate(threads_presenti):
+    subset = df_plot[df_plot['threads'] == t].sort_values('grand_vet')
+    
+    if not subset.empty:
+        plt.plot(subset['grand_vet'], subset['tempo_medio'], 
+                 marker='o', 
+                 linestyle='-', 
+                 label=f'{t} Threads',
+                 color=colors[i],
+                 alpha=0.8)
+
+# 4. Estetica
+plt.title('Tempo di esecuzione vs Dimensione Vettore (Outer Loop)', fontsize=14)
+plt.xlabel('Dimensione del Vettore (grand_vet)', fontsize=12)
+plt.ylabel('Tempo Medio (s)', fontsize=12)
+
+# Formattazione asse X per evitare notazione scientifica pesante
+plt.ticklabel_format(style='plain', axis='x')
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend(title="Configurazione")
+
+plt.tight_layout()
+plt.show()
+```
+Se si aumenta la grandezza della finestra di calcolo dell'SMA, cresce anche la difficoltà del problema in quanto aumentano i cicli da dover eseguire
+
+## SPEED-UP
 Lo **Speed-up** è calcolato come:
 $$
 S_{up} = \frac{S_{base}}{S_{calc}}
@@ -170,132 +377,481 @@ Indica quanto veloce è laparallelizzazione rispetto al programma eseguito seque
 ```{python}
 #| echo: false
 #| label: tbl-speedup-outer
-#| tbl-cap: "Speed-up delle implementazioni Outer (solo test con carico di lavoro coerente)"
+#| tbl-cap: "Speed-up delle implementazioni Outer"
+#| fig-pos: 'H'
 
 # Caricamento dati
 df = pd.read_csv("dati.csv")
 
 # 1. Filtriamo solo i 'outer' e scartiamo il primo record (quello con num_cili_per_rep minore)
-# Usiamo il valore standard di num_cili_per_rep per questo benchmark: 1075576320
 df_outer = df[(df['tipo'] == 'outer') & (df['num_cili_per_rep'] == 1075576320)].copy()
 
 # 2. Calcoliamo lo speed-up
-# Prendiamo come riferimento (T_base) il tempo medio più alto registrato per 'outer'
 t_base = df_outer['tempo_medio'].max()
-
 df_outer['speed_up'] = t_base / df_outer['tempo_medio']
 
-# 3. Pulizia della tabella per il report
-# Nota: nei tuoi dati i thread sono segnati come 0 per la CPU, 
-# se hai dati con thread diversi verranno raggruppati qui.
-df_table = df_outer[['tipo', 'threads', 'tempo_medio', 'speed_up']].copy()
+# 3. Pulizia della tabella includendo la colonna 'schedule'
+# Assicurati che nel CSV la colonna si chiami esattamente 'schedule'
+df_table = df_outer[['tipo', 'threads', 'schedule', 'tempo_medio', 'speed_up']].copy()
 
 # Arrotondamento per leggibilità
 df_table['tempo_medio'] = df_table['tempo_medio'].round(4)
 df_table['speed_up'] = df_table['speed_up'].round(2)
 
-# Rinominiamo le colonne per chiarezza
-df_table.columns = ['Tipo', 'Threads', 'Tempo Medio (s)', 'Speed-up']
+# Rinominiamo le colonne (nota l'aggiunta di 'Schedule')
+df_table.columns = ['Tipo', 'Threads', 'Schedule', 'Tempo Medio (s)', 'Speed-up']
 
-# Visualizzazione
+# Visualizzazione ordinata per Threads
 df_table.sort_values(by='Threads', ascending=True)
 ```
 
-Da questa tabella si nota che il test migliore ha otttenuto uno **Speed-up** di `python f"{df_table['speed_up'].max():.2f}"`.
+Da questa tabella si nota che il test migliore ha ottenuto uno **Speed-up** di `{python} f"{df_outer_all.loc[df_outer_all['speed_up'].idxmax(), 'speed_up']:.2f}"`x, utilizzando lo schedule `{python} df_outer_all.loc[df_outer_all['speed_up'].idxmax(), 'schedule']` con `{python} int(df_outer_all.loc[df_outer_all['speed_up'].idxmax(), 'threads'])` threads.
 
 Inizialmente lo Speed-up è circa due volte superiore a quello del numero di Thread inferiore quindi un andamento lineare.
 
 ```{python}
 #| echo: false
-#| label: fig-speedup-uniform
-#| fig-cap: "Speed-up Outer con distribuzione uniforme sull'asse X"
+#| label: fig-speedup-comparison-clean
+#| fig-cap: "Analisi della scalabilità: confronto Static, Dynamic e Guided (Outer)"
+#| fig-pos: 'H'
 
 # 1. Caricamento e Filtro
 df = pd.read_csv("dati.csv")
-df_outer = df[(df['tipo'] == 'outer') & (df['num_cili_per_rep'] == 1075576320)].copy()
+
+# Calcoliamo il tempo seriale (1 thread) prima di filtrare
+t_seriale = df[(df['tipo'] == 'outer') & (df['threads'] == 1)]['tempo_medio'].mean()
+
+# Filtriamo per threads > 1 per pulire il grafico
+df_outer = df[
+    (df['tipo'] == 'outer') & 
+    (df['num_cili_per_rep'] == 1075576320) & 
+    (df['threads'] > 1)
+].copy()
 
 # 2. Calcolo Speed-up
-t_base = df_outer['tempo_medio'].max()
-df_outer['speed_up'] = t_base / df_outer['tempo_medio']
+df_outer['speed_up'] = t_seriale / df_outer['tempo_medio']
 
-# Ordiniamo per thread per coerenza nel disegno della linea
-df_outer = df_outer.sort_values(by='threads')
-
-# 3. Creazione asse X uniforme
-# Usiamo un range semplice (0, 1, 2...) invece dei valori reali dei thread
-x_uniform = range(len(df_outer))
-# Creiamo le etichette per i thread (es: "1", "2", "4"...)
-labels = df_outer['threads'].astype(str).tolist()
-
-# 4. Grafico
+# 3. Grafico
 plt.figure(figsize=(10, 6))
 
-plt.plot(x_uniform, df_outer['speed_up'], 
-         marker='o', 
-         linestyle='-', 
-         linewidth=2, 
-         markersize=8, 
-         color='#2c3e50', 
-         label='Speed-up Outer')
+configs = {
+    'static':  {'color': '#2980b9', 'marker': 'o', 'label': 'Static'},
+    'dynamic': {'color': '#e67e22', 'marker': 's', 'label': 'Dynamic'},
+    'guided':  {'color': '#27ae60', 'marker': '^', 'label': 'Guided'}
+}
 
-# Aggiungiamo i valori numerici dello speed-up sopra i punti
-for i, val in enumerate(df_outer['speed_up']):
-    plt.text(i, val + 0.05, f'{val:.2f}', ha='center', fontweight='bold')
+# 4. Disegno delle linee
+for sched, style in configs.items():
+    subset = df_outer[df_outer['schedule'] == sched].sort_values('threads')
+    
+    if not subset.empty:
+        # Usiamo i thread come stringhe per asse X uniforme
+        plt.plot(subset['threads'].astype(str), 
+                 subset['speed_up'], 
+                 label=style['label'], 
+                 color=style['color'], 
+                 marker=style['marker'], 
+                 linewidth=2.5, 
+                 markersize=8)
 
-# Impostiamo le etichette dell'asse X in modo che siano uniformi
-plt.xticks(x_uniform, labels)
-
-plt.title('Andamento Speed-up', fontsize=14)
+# 5. Estetica e Griglia
+plt.title('Scalabilità OpenMP: Confronto Strategie di Scheduling', fontsize=14)
 plt.xlabel('Numero di Thread', fontsize=12)
-plt.ylabel('Speed-up', fontsize=12)
+plt.ylabel('Speed-up ($T_{1}/T_{n}$)', fontsize=12)
 
-plt.grid(True, axis='y', linestyle='--', alpha=0.7)
-plt.legend()
+# Griglia più leggera per non disturbare la vista
+plt.grid(True, axis='both', linestyle='--', alpha=0.4)
+plt.legend(title="Schedule Type")
 
+# Riferimento ideale (opzionale, ma utile per vedere quanto perdiamo)
+# threads_val = sorted(df_outer['threads'].unique())
+# plt.plot([str(t) for t in threads_val], threads_val, color='gray', linestyle=':', alpha=0.3, label='Ideale')
+
+plt.tight_layout()
 plt.show()
 ```
 
-Come si può notare fino a 16 Thread la velocità ha continuato a salire, anche se da 8 a 16 non è raddoppiata, poi è scesa stabilizzandosi.
-Questo fenomeno è dovuto al fatto che il processore utilizzato è un **Intel(R) Core(TM) Ultra 7 255H** che ha 16 core fisici ed un thread per core, quindi nel momento in cui vengono superati i "limiti fisici", non si notano più miglioramenti, anzi un leggero peggioramento.
+Come si può notare fino a 16 Thread la velocità ha continuato a salire, anche se da 8 a 16 non è raddoppiata, poi si è stabilizzata.
+Questo fenomeno è dovuto al fatto che il processore utilizzato è un **Intel(R) Core(TM) Ultra 7 255H** che ha 16 core fisici ed un thread per core, quindi nel momento in cui vengono superati i "limiti fisici", non si notano più grandi miglioramenti.
 
 
 ### Confronto tra scheduling
-Il miglior **schedule** usato è static perché divide il lavoro tra i vari thread inizialmente e non in corso d'opera, eliminando cos l'overhead. Funziona meglio in questo caso perché i thread hanno sempre lo stesso numero di operazioni e dividere il lavoro precedentemente riporta un aumento delle prestazioni, come si può vedere nel seguente grafico
+Tra gli scheduling analizzati, lo static risulta generalmente molto efficiente perché assegna il carico computazionale ai thread in fase iniziale, riducendo l’overhead di gestione. Tuttavia, dai risultati sperimentali emerge che non esiste una scelta universalmente migliore: in alcuni casi lo static ottiene le migliori prestazioni, mentre in altri lo scheduling guided risulta più efficiente. Questo comportamento dipende dal numero di thread e dalla dimensione del problema, che influenzano il bilanciamento tra overhead di assegnazione e bilanciamento del carico.
 
 ```{python}
 #| echo: false
-#| label: fig-speedup-uniform
-#| fig-cap: "Speed-up Outer con distribuzione uniforme sull'asse X"
+#| label: fig-time-thread-schedule
+#| fig-cap: "Tempo medio con min e max per Thread e Schedule"
+#| fig-pos: 'H'
 
-# 3. Preparazione dati per il boxplot
-# Creiamo una lista di array, uno per ogni tipo di scheduling
-sched_types = ['static', 'dynamic', 'guided']
-data_to_plot = [df_outer[df_outer['scheduling'] == s]['speed_up'] for s in sched_types]
+df = pd.read_csv("dati.csv")
 
-# Rimuoviamo eventuali liste vuote se uno scheduling manca nel CSV
-data_to_plot = [d for d in data_to_plot if not d.empty]
-labels_to_plot = [s for s in sched_types if not df_outer[df_outer['scheduling'] == s].empty]
+df_outer = df[(df['tipo'] == 'outer') & (df['num_cili_per_rep'] == 1075576320)].copy()
+df_outer = df_outer[df_outer['threads'] > 1]
 
-# 4. Grafico
-plt.figure(figsize=(10, 6))
+threads = sorted(df_outer['threads'].unique())
+schedules = sorted(df_outer['schedule'].unique())
 
-# Creazione del boxplot
-box = plt.boxplot(data_to_plot, 
-                  labels=labels_to_plot, 
-                  patch_artist=True, 
-                  medianprops={'color': 'black', 'linewidth': 2})
+colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f']
 
-# Coloriamo i box per distinguerli
-colors = ['#3498db', '#e74c3c', '#2ecc71']
-for patch, color in zip(box['boxes'], colors):
-    patch.set_facecolor(color)
-    patch.set_alpha(0.7)
+plt.figure(figsize=(12, 6))
 
-plt.title('Distribuzione Speed-up per Strategia di Scheduling', fontsize=14)
-plt.ylabel('Speed-up ($T_{max} / T_{i}$)', fontsize=12)
-plt.xlabel('Tipo di Scheduling', fontsize=12)
+width = 0.2
+pos_base = 1
+
+for t in threads:
+    for i, s in enumerate(schedules):
+
+        subset = df_outer[(df_outer['threads'] == t) & (df_outer['schedule'] == s)]
+
+        if subset.empty:
+            continue
+
+        mean = subset['tempo_medio'].values[0]
+        tmin = subset['tempo_min'].values[0]
+        tmax = subset['tempo_max'].values[0]
+
+        x = pos_base + i * width
+
+        plt.errorbar(
+            x,
+            mean,
+            yerr=[[mean - tmin], [tmax - mean]],
+            fmt='o',
+            color=colors[i % len(schedules)],
+            capsize=5
+        )
+
+    pos_base += len(schedules) * width + 0.8
+
+# tick centrali
+tick_positions = []
+pos_base = 1
+labels = []
+
+for t in threads:
+    center = pos_base + (len(schedules)-1)*width/2
+    tick_positions.append(center)
+    labels.append(str(int(t)))
+    pos_base += len(schedules) * width + 0.8
+
+plt.xticks(tick_positions, labels)
+
+# legenda
+for i, s in enumerate(schedules):
+    plt.plot([], [], color=colors[i], label=s)
+
+plt.legend(title="Schedule")
+
+plt.title("Tempo medio con intervallo min/max per Thread e Schedule")
+plt.xlabel("Thread")
+plt.ylabel("Tempo")
+
 plt.grid(axis='y', linestyle='--', alpha=0.6)
-
+plt.tight_layout()
 plt.show()
 ```
 
+## Ciclo interno
+Analizzando la parallelizzazione sul ciclo interno di soli 512 valori alla volta si nota che più thread vengono usati più peggiora la situazione.
+
+```{python}
+#| echo: false
+#| label: tbl-speedup-intern
+#| tbl-cap: "Speed-up delle implementazioni Intern"
+#| fig-pos: 'H'
+
+# Caricamento dati
+df = pd.read_csv("dati.csv")
+
+# 1. Filtriamo solo i 'intern' con il carico di lavoro standard
+df_intern = df[(df['tipo'] == 'intern') & (df['num_cili_per_rep'] == 1075576320)].copy()
+
+# 2. Calcoliamo lo speed-up rispetto a 1 Thread
+# Estraiamo il tempo medio dove threads == 1
+# Usiamo .iloc[0] per prendere il valore numerico
+t_single_thread = df_intern[df_intern['threads'] == 1]['tempo_medio'].iloc[0]
+
+df_intern['speed_up'] = t_single_thread / df_intern['tempo_medio']
+
+# 3. Preparazione della tabella
+df_table_intern = df_intern[['tipo', 'threads', 'schedule', 'tempo_medio', 'speed_up']].copy()
+
+# Arrotondamento
+df_table_intern['tempo_medio'] = df_table_intern['tempo_medio'].round(4)
+df_table_intern['speed_up'] = df_table_intern['speed_up'].round(2)
+
+# Rinominiamo le colonne
+df_table_intern.columns = ['Tipo', 'Threads', 'Schedule', 'Tempo Medio (s)', 'Speed-up']
+
+# Visualizzazione ordinata per Threads
+df_table_intern.sort_values(by='Threads', ascending=True)
+```
+
+
+```{python}
+#| echo: false
+#| label: fig-speedup-comparison-intern
+#| fig-cap: "Analisi della scalabilità: confronto Static, Dynamic e Guided (Intern)"
+#| fig-pos: 'H'
+
+# 1. Caricamento
+df = pd.read_csv("dati.csv")
+
+# Calcoliamo il tempo seriale di riferimento SPECIFICO per l'intern (1 thread)
+# Questo è fondamentale per vedere l'impatto dell'overhead
+t_seriale_intern = df[(df['tipo'] == 'intern') & (df['threads'] == 1)]['tempo_medio'].mean()
+
+# Filtriamo per tipo intern e threads > 1
+df_intern = df[
+    (df['tipo'] == 'intern') & 
+    (df['num_cili_per_rep'] == 1075576320) & 
+    (df['threads'] > 1)
+].copy()
+
+# 2. Calcolo Speed-up
+df_intern['speed_up'] = t_seriale_intern / df_intern['tempo_medio']
+
+# 3. Grafico
+plt.figure(figsize=(10, 6))
+
+configs = {
+    'static':  {'color': '#2980b9', 'marker': 'o', 'label': 'Static'},
+    'dynamic': {'color': '#e67e22', 'marker': 's', 'label': 'Dynamic'},
+    'guided':  {'color': '#27ae60', 'marker': '^', 'label': 'Guided'}
+}
+
+# 4. Disegno delle linee
+for sched, style in configs.items():
+    subset = df_intern[df_intern['schedule'] == sched].sort_values('threads')
+    
+    if not subset.empty:
+        # Usiamo i thread come stringhe per asse X uniforme
+        plt.plot(subset['threads'].astype(str), 
+                 subset['speed_up'], 
+                 label=style['label'], 
+                 color=style['color'], 
+                 marker=style['marker'], 
+                 linewidth=2.5, 
+                 markersize=8)
+
+# 5. Estetica e Griglia
+plt.title('Scalabilità OpenMP: Parallelizzazione Ciclo Interno (Intern)', fontsize=14)
+plt.xlabel('Numero di Thread', fontsize=12)
+plt.ylabel('Speed-up ($T_{1}/T_{n}$)', fontsize=12)
+
+# Linea orizzontale di riferimento a 1.0 (soglia di utilità)
+plt.axhline(y=1.0, color='red', linestyle=':', alpha=0.5, label='Soglia efficienza')
+
+plt.grid(True, axis='both', linestyle='--', alpha=0.4)
+plt.legend(title="Schedule Type")
+
+plt.tight_layout()
+plt.show()
+```
+
+Dai grafici si nota un calo importante delle prestazioni, probabilmente dovuto al fatto che i pochi cicli parallelizzati rendono inefficiente il lavoro. Il richiamo dei thread occupa più spazio che il miglioramento nelle prestazione. Quindi risulta inutile parallelizzare il ciclo interno.
+
+Si può anche notare una grande differenza tra i vari schedule, dove lo static domina rispetto agli altri.
+
+```{python}
+#| echo: false
+#| label: fig-time-thread-schedule-intern
+#| fig-cap: "Tempo medio con min e max per Thread e Schedule (Intern)"
+#| fig-pos: 'H'
+
+# 1. Caricamento dati
+df = pd.read_csv("dati.csv")
+
+# 2. Filtro per implementazione 'intern' e carico standard (threads > 1)
+df_intern = df[(df['tipo'] == 'intern') & (df['num_cili_per_rep'] == 1075576320)].copy()
+df_intern = df_intern[df_intern['threads'] > 1]
+
+# Identifichiamo thread e schedule presenti
+threads = sorted(df_intern['threads'].unique())
+schedules = sorted(df_intern['schedule'].unique())
+
+colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f']
+
+plt.figure(figsize=(12, 6))
+
+width = 0.2
+pos_base = 1
+
+# 3. Creazione del plot con barre di errore
+for t in threads:
+    for i, s in enumerate(schedules):
+        subset = df_intern[(df_intern['threads'] == t) & (df_intern['schedule'] == s)]
+
+        if subset.empty:
+            continue
+
+        mean = subset['tempo_medio'].values[0]
+        tmin = subset['tempo_min'].values[0]
+        tmax = subset['tempo_max'].values[0]
+
+        # Calcolo posizione X per raggruppare gli schedule sotto lo stesso numero di thread
+        x = pos_base + i * width
+
+        plt.errorbar(
+            x,
+            mean,
+            yerr=[[max(0, mean - tmin)], [max(0, tmax - mean)]],
+            fmt='o',
+            color=colors[i % len(colors)],
+            capsize=5,
+            markersize=6,
+            linewidth=1.5
+        )
+
+    # Incremento posizione per il prossimo gruppo di thread
+    pos_base += len(schedules) * width + 0.8
+
+# 4. Gestione Tick centrali
+tick_positions = []
+pos_base = 1
+labels_x = []
+
+for t in threads:
+    center = pos_base + (len(schedules)-1) * width / 2
+    tick_positions.append(center)
+    labels_x.append(str(int(t)))
+    pos_base += len(schedules) * width + 0.8
+
+plt.xticks(tick_positions, labels_x)
+
+# 5. Legenda manuale
+for i, s in enumerate(schedules):
+    plt.plot([], [], color=colors[i % len(colors)], label=s, marker='o', linestyle='')
+
+plt.legend(title="Schedule", frameon=True)
+
+plt.title("Analisi Tempi Intern: Media con intervallo Min/Max", fontsize=14)
+plt.xlabel("Numero di Thread", fontsize=12)
+plt.ylabel("Tempo di esecuzione (s)", fontsize=12)
+
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.show()
+```
+
+#### Nota
+Non sono stati messi i thread superiori, perché ci metteva troppo a realizzare un singolo test, anche più di dieci minuti.
+
+## CUDA
+**CUDA** utilizza la scheda grafica per fare i calcoli ed è molto potente.
+
+```{python}
+#| echo: false
+#| label: tbl-speedup-cuda
+#| tbl-cap: "Speed-up CUDA rispetto a CPU Sequenziale (Outer 1 Thread)"
+#| fig-pos: 'H'
+
+# Caricamento dati
+df = pd.read_csv("dati.csv")
+
+# 1. Recuperiamo il tempo di riferimento: CPU Sequenziale (tipo 'outer' con 1 thread)
+t_base_cpu = df[(df['tipo'] == 'outer') & (df['threads'] == 1) & (df['num_cili_per_rep'] == 1075576320)]['tempo_medio'].mean()
+
+# 2. Filtriamo i dati per CUDA
+df_cuda = df[(df['tipo'].str.lower() == 'cuda') & (df['num_cili_per_rep'] == 1075576320)].copy()
+
+# 3. Calcoliamo lo speed-up relativo alla CPU
+df_cuda['speed_up'] = t_base_cpu / df_cuda['tempo_medio']
+
+# 4. Preparazione della tabella con rinomina dei thread
+# Selezioniamo 'tipo', 'threads' (che diventeranno thread per blocco), 'tempo_medio' e 'speed_up'
+df_table_cuda = df_cuda[['tipo', 'threads', 'tempo_medio', 'speed_up']].copy()
+
+# Arrotondamento
+df_table_cuda['tempo_medio'] = df_table_cuda['tempo_medio'].round(6)
+df_table_cuda['speed_up'] = df_table_cuda['speed_up'].round(2)
+
+# Rinominiamo le colonne per chiarezza CUDA
+df_table_cuda.columns = ['Tipo', 'Thread per blocco', 'Tempo Medio (s)', 'Speed-up (Vs CPU)']
+
+# Visualizzazione ordinata per configurazione hardware
+df_table_cuda.sort_values(by='Thread per blocco', ascending=True)
+```
+
+Analizzando i dati raccolti, si nota che il test migliore utilizzando CUDA ha ottenuto uno Speed-up di `{python} f"{df_cuda['speed_up'].max():.2f}"`x rispetto all'esecuzione sequenziale su CPU, configurando il kernel con `{python} int(df_cuda.loc[df_cuda['speed_up'].idxmax(), 'threads'])` threads per blocco.
+
+#### Ipotesi
+Tra i 32 e i 1024 threads per blocco non ci sono grandi differenze, questo probabilmente è dovuto ad un problema di **Memory Bound** in cui dovendo richiamare 512 valori, la VRAM fa fatica.
+Questo si potrebbe risolvere con una **Shared Memory** in modo da non dover richiamare ogni volta i dati dalla memoria.
+
+## CONFRONTO TRA I VARI METODI
+
+```{python}
+#| echo: false
+#| label: fig-confronto-finale-metodi
+#| fig-cap: "Confronto dei tempi migliori: OpenMP (Outer vs Intern) e CUDA"
+#| fig-pos: 'H'
+
+# 1. Caricamento dati
+df = pd.read_csv("dati.csv")
+carico_target = 1075576320
+
+# Liste per raccogliere i dati da plottare
+metodi_raw = ['outer', 'intern', 'cuda']
+nomi_visualizzati = ['OpenMP Outer', 'OpenMP Intern', 'CUDA']
+colori = ['#2980b9', '#e74c3c', '#27ae60']
+
+best_means = []
+errors_min = []
+errors_max = []
+
+# 2. Elaborazione dati per ogni metodo
+for m in metodi_raw:
+    # Filtro per tipo e per il numero di cicli specifico
+    subset = df[(df['tipo'].str.lower() == m) & (df['num_cili_per_rep'] == carico_target)]
+    
+    if not subset.empty:
+        # Identifichiamo la riga con il tempo medio più basso (il "best case")
+        idx_best = subset['tempo_medio'].idxmin()
+        best_row = subset.loc[idx_best]
+        
+        mean_val = best_row['tempo_medio']
+        best_means.append(mean_val)
+        
+        # Calcolo errore per le barre (distanza dal valore medio)
+        errors_min.append(mean_val - best_row['tempo_min'])
+        errors_max.append(best_row['tempo_max'] - mean_val)
+    else:
+        # Se mancano dati per un metodo, mettiamo 0 per non rompere il grafico
+        best_means.append(0)
+        errors_min.append(0)
+        errors_max.append(0)
+
+# 3. Costruzione del grafico
+plt.figure(figsize=(10, 6))
+x_pos = np.arange(len(nomi_visualizzati))
+
+# Disegno delle barre
+bars = plt.bar(x_pos, best_means, color=colori, alpha=0.8, edgecolor='black', linewidth=1)
+
+# Aggiunta barre di errore (Min/Max)
+plt.errorbar(x_pos, best_means, yerr=[errors_min, errors_max], 
+             fmt='none', ecolor='black', capsize=8, elinewidth=1.5)
+
+# 4. Estetica e Annotazioni
+plt.xticks(x_pos, nomi_visualizzati, fontsize=11)
+plt.ylabel('Tempo di esecuzione (secondi)', fontsize=12)
+plt.title('Performance migliori: Confronto tra le implementazioni', fontsize=14)
+
+# Aggiungiamo i valori numerici sopra le barre per precisione
+for bar in bars:
+    height = bar.get_height()
+    if height > 0:
+        plt.text(bar.get_x() + bar.get_width()/2., height,
+                 f'{height:.4f}s', ha='center', va='bottom', 
+                 fontweight='bold', fontsize=10)
+
+plt.grid(axis='y', linestyle='--', alpha=0.3)
+
+# Se CUDA è troppo piccolo (es. 0.001 vs 1.0), togli il commento qui sotto:
+# plt.yscale('log')
+
+plt.tight_layout()
+plt.show()
+```

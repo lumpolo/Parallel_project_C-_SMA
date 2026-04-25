@@ -36,12 +36,33 @@ $(TARGET): $(CPP_OBJS) $(CUDA_OBJS)
 
 
 test: all
+
+	@echo "--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---"
+	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 32768 256 outer 1 100 1 static
+
+	@echo "--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---"
+	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 65536 256 outer 1 100 1 static
+
+	@echo "--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---"
+	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 131072 256 outer 1 100 1 static
+
+	@echo "--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---"
+	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 262144 256 outer 1 100 1 static
 	
 	@echo "--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---"
 	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 524288 256 outer 1 100 1 static
+
+	@echo "--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---"
+	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 1048576 256 outer 1 100 1 static
 	
 	@echo "--- TEST 2: OPENMP (1 Thread, static, ciclo esterno) ---"
 	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 2097152 256 outer 1 100 1 static
+
+	@echo "--- TEST 2: OPENMP (1 Thread, static, ciclo esterno) ---"
+	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 4194304 256 outer 1 10 1 static
+
+	@echo "--- TEST 2: OPENMP (1 Thread, static, ciclo esterno) ---"
+	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 8388608 256 outer 1 10 1 static
 
 	@echo "--- TEST 3: OPENMP (1 Thread, static, ciclo esterno) ---"
 	OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./$(TARGET) 2097152 512 outer 1 100 1 static

@@ -5,204 +5,260 @@ g++ -fopenmp  -c indicator.cpp -o indicator.o
 nvcc -arch=sm_61 -c cuda.cu -o cuda.o_cuda
 g++ -fopenmp  -o Primo_Progetto main.o iniz.o stmp.o indicator.o cuda.o_cuda -lcudart
 --- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---
+OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 32768 256 outer 1 100 1 static
+Num. di cicli per singolo test(senza REPS): 8355584
+Il tempo di esecuzione totale del calcolo dell'SMA e': 1.59424
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.0159424
+Il tempo min e': 0.0151366
+Il tempo max e': 0.0194382
+Programma Finito!
+--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---
+OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 65536 256 outer 1 100 1 static
+Num. di cicli per singolo test(senza REPS): 16776960
+Il tempo di esecuzione totale del calcolo dell'SMA e': 3.33562
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.0333562
+Il tempo min e': 0.0305686
+Il tempo max e': 0.0396745
+Programma Finito!
+--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---
+OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 131072 256 outer 1 100 1 static
+Num. di cicli per singolo test(senza REPS): 33619712
+Il tempo di esecuzione totale del calcolo dell'SMA e': 6.32622
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.0632622
+Il tempo min e': 0.0613522
+Il tempo max e': 0.0721089
+Programma Finito!
+--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---
+OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 262144 256 outer 1 100 1 static
+Num. di cicli per singolo test(senza REPS): 67305216
+Il tempo di esecuzione totale del calcolo dell'SMA e': 12.8265
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.128265
+Il tempo min e': 0.123352
+Il tempo max e': 0.142967
+Programma Finito!
+--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 524288 256 outer 1 100 1 static
 Num. di cicli per singolo test(senza REPS): 134676224
-Il tempo di esecuzione totale del calcolo dell'SMA e': 25.3135
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.253135
-Il tempo min e': 0.246947
-Il tempo max e': 0.27904
+Il tempo di esecuzione totale del calcolo dell'SMA e': 25.3735
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.253735
+Il tempo min e': 0.247577
+Il tempo max e': 0.26542
+Programma Finito!
+--- TEST 1: OPENMP (1 Thread, static, ciclo esterno) ---
+OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 1048576 256 outer 1 100 1 static
+Num. di cicli per singolo test(senza REPS): 269418240
+Il tempo di esecuzione totale del calcolo dell'SMA e': 50.5159
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.505159
+Il tempo min e': 0.496189
+Il tempo max e': 0.519911
 Programma Finito!
 --- TEST 2: OPENMP (1 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 256 outer 1 100 1 static
 Num. di cicli per singolo test(senza REPS): 538902272
-Il tempo di esecuzione totale del calcolo dell'SMA e': 101.028
-Il tempo di esecuzione medio del calcolo dell'SMA e': 1.01028
-Il tempo min e': 0.994527
-Il tempo max e': 1.03127
+Il tempo di esecuzione totale del calcolo dell'SMA e': 100.565
+Il tempo di esecuzione medio del calcolo dell'SMA e': 1.00565
+Il tempo min e': 0.995683
+Il tempo max e': 1.02494
+Programma Finito!
+--- TEST 2: OPENMP (1 Thread, static, ciclo esterno) ---
+OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 4194304 256 outer 1 10 1 static
+Num. di cicli per singolo test(senza REPS): 1077870336
+Il tempo di esecuzione totale del calcolo dell'SMA e': 20.1415
+Il tempo di esecuzione medio del calcolo dell'SMA e': 2.01415
+Il tempo min e': 2.00023
+Il tempo max e': 2.03786
+Programma Finito!
+--- TEST 2: OPENMP (1 Thread, static, ciclo esterno) ---
+OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 8388608 256 outer 1 10 1 static
+Num. di cicli per singolo test(senza REPS): 2155806464
+Il tempo di esecuzione totale del calcolo dell'SMA e': 40.4084
+Il tempo di esecuzione medio del calcolo dell'SMA e': 4.04084
+Il tempo min e': 4.02438
+Il tempo max e': 4.07231
 Programma Finito!
 --- TEST 3: OPENMP (1 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 outer 1 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 210.723
-Il tempo di esecuzione medio del calcolo dell'SMA e': 2.10723
-Il tempo min e': 2.08725
-Il tempo max e': 2.16123
+Il tempo di esecuzione totale del calcolo dell'SMA e': 210.997
+Il tempo di esecuzione medio del calcolo dell'SMA e': 2.10997
+Il tempo min e': 2.09085
+Il tempo max e': 2.13965
 Programma Finito!
 --- TEST 4: OPENMP (1 Thread, static, ciclo intern) ---
 OMP_NUM_THREADS=1 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 intern 1 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 253.819
-Il tempo di esecuzione medio del calcolo dell'SMA e': 2.53819
-Il tempo min e': 2.51323
-Il tempo max e': 2.69534
+Il tempo di esecuzione totale del calcolo dell'SMA e': 253.943
+Il tempo di esecuzione medio del calcolo dell'SMA e': 2.53943
+Il tempo min e': 2.51489
+Il tempo max e': 2.68438
 Programma Finito!
 --- TEST 5: OPENMP (2 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=2 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 outer 2 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 106.497
-Il tempo di esecuzione medio del calcolo dell'SMA e': 1.06497
-Il tempo min e': 1.0513
-Il tempo max e': 1.0823
+Il tempo di esecuzione totale del calcolo dell'SMA e': 106.414
+Il tempo di esecuzione medio del calcolo dell'SMA e': 1.06414
+Il tempo min e': 1.05233
+Il tempo max e': 1.08147
 Programma Finito!
 --- TEST 6: OPENMP (2 Thread, dynamic, ciclo esterno) ---
 OMP_NUM_THREADS=2 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 outer 2 100 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 110.177
-Il tempo di esecuzione medio del calcolo dell'SMA e': 1.10177
-Il tempo min e': 1.08731
-Il tempo max e': 1.11418
+Il tempo di esecuzione totale del calcolo dell'SMA e': 110.604
+Il tempo di esecuzione medio del calcolo dell'SMA e': 1.10604
+Il tempo min e': 1.09555
+Il tempo max e': 1.11739
 Programma Finito!
 --- TEST 7: OPENMP (2 Thread, guided, ciclo esterno) ---
 OMP_NUM_THREADS=2 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 outer 2 100 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 106.314
-Il tempo di esecuzione medio del calcolo dell'SMA e': 1.06314
-Il tempo min e': 1.04662
-Il tempo max e': 1.08225
+Il tempo di esecuzione totale del calcolo dell'SMA e': 106.317
+Il tempo di esecuzione medio del calcolo dell'SMA e': 1.06317
+Il tempo min e': 1.05294
+Il tempo max e': 1.08245
 Programma Finito!
 --- TEST 8: OPENMP (2 Thread, static, ciclo intern) ---
 OMP_NUM_THREADS=2 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 intern 2 50 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 116.026
-Il tempo di esecuzione medio del calcolo dell'SMA e': 2.32051
-Il tempo min e': 2.26363
-Il tempo max e': 2.35902
+Il tempo di esecuzione totale del calcolo dell'SMA e': 117.234
+Il tempo di esecuzione medio del calcolo dell'SMA e': 2.34467
+Il tempo min e': 2.31378
+Il tempo max e': 2.37427
 Programma Finito!
 --- TEST 9: OPENMP (2 Thread, dynamic, ciclo intern) ---
 OMP_NUM_THREADS=2 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 intern 2 10 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 207.612
-Il tempo di esecuzione medio del calcolo dell'SMA e': 20.7612
-Il tempo min e': 20.5907
-Il tempo max e': 20.9894
+Il tempo di esecuzione totale del calcolo dell'SMA e': 197.587
+Il tempo di esecuzione medio del calcolo dell'SMA e': 19.7587
+Il tempo min e': 19.6192
+Il tempo max e': 19.8781
 Programma Finito!
 --- TEST 10: OPENMP (2 Thread, guided, ciclo intern) ---
 OMP_NUM_THREADS=2 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 intern 2 50 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 153.806
-Il tempo di esecuzione medio del calcolo dell'SMA e': 3.07612
-Il tempo min e': 3.04951
-Il tempo max e': 3.10833
+Il tempo di esecuzione totale del calcolo dell'SMA e': 151.456
+Il tempo di esecuzione medio del calcolo dell'SMA e': 3.02911
+Il tempo min e': 2.99452
+Il tempo max e': 3.07585
 Programma Finito!
 --- TEST 11: OPENMP (4 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=4 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 outer 4 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 54.8462
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.548462
-Il tempo min e': 0.539745
-Il tempo max e': 0.555187
+Il tempo di esecuzione totale del calcolo dell'SMA e': 54.8702
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.548702
+Il tempo min e': 0.543297
+Il tempo max e': 0.556691
 Programma Finito!
 --- TEST 12: OPENMP (4 Thread, dynamic, ciclo esterno) ---
 OMP_NUM_THREADS=4 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 outer 4 100 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 58.2762
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.582762
-Il tempo min e': 0.577477
-Il tempo max e': 0.590745
+Il tempo di esecuzione totale del calcolo dell'SMA e': 58.2503
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.582503
+Il tempo min e': 0.577831
+Il tempo max e': 0.590418
 Programma Finito!
 --- TEST 13: OPENMP (4 Thread, guided, ciclo esterno) ---
 OMP_NUM_THREADS=4 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 outer 4 100 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 54.7265
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.547265
-Il tempo min e': 0.541998
-Il tempo max e': 0.55711
+Il tempo di esecuzione totale del calcolo dell'SMA e': 54.7042
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.547042
+Il tempo min e': 0.540269
+Il tempo max e': 0.555129
 Programma Finito!
 --- TEST 14: OPENMP (4 Thread, static, ciclo intern) ---
 OMP_NUM_THREADS=4 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 intern 4 50 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 127.435
-Il tempo di esecuzione medio del calcolo dell'SMA e': 2.5487
-Il tempo min e': 2.4942
-Il tempo max e': 2.58511
+Il tempo di esecuzione totale del calcolo dell'SMA e': 128.122
+Il tempo di esecuzione medio del calcolo dell'SMA e': 2.56244
+Il tempo min e': 2.53167
+Il tempo max e': 2.60517
 Programma Finito!
 --- TEST 15: OPENMP (4 Thread, dynamic, ciclo intern) ---
 OMP_NUM_THREADS=4 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 intern 4 10 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 196.907
-Il tempo di esecuzione medio del calcolo dell'SMA e': 19.6907
-Il tempo min e': 19.6529
-Il tempo max e': 19.7709
+Il tempo di esecuzione totale del calcolo dell'SMA e': 206.458
+Il tempo di esecuzione medio del calcolo dell'SMA e': 20.6458
+Il tempo min e': 20.5942
+Il tempo max e': 20.6948
 Programma Finito!
 --- TEST 16: OPENMP (4 Thread, guided, ciclo intern) ---
 OMP_NUM_THREADS=4 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 intern 4 25 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 165.122
-Il tempo di esecuzione medio del calcolo dell'SMA e': 6.60489
-Il tempo min e': 6.57168
-Il tempo max e': 6.69567
+Il tempo di esecuzione totale del calcolo dell'SMA e': 155.697
+Il tempo di esecuzione medio del calcolo dell'SMA e': 6.22786
+Il tempo min e': 6.17558
+Il tempo max e': 6.29761
 Programma Finito!
 --- TEST 17: OPENMP (8 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=8 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 outer 8 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 28.7042
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.287042
-Il tempo min e': 0.284156
-Il tempo max e': 0.300428
+Il tempo di esecuzione totale del calcolo dell'SMA e': 28.7185
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.287185
+Il tempo min e': 0.283874
+Il tempo max e': 0.294193
 Programma Finito!
 --- TEST 18: OPENMP (8 Thread, dynamic, ciclo esterno) ---
 OMP_NUM_THREADS=8 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 outer 8 100 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 32.8914
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.328914
-Il tempo min e': 0.305149
-Il tempo max e': 0.345496
+Il tempo di esecuzione totale del calcolo dell'SMA e': 31.7303
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.317303
+Il tempo min e': 0.305797
+Il tempo max e': 0.334851
 Programma Finito!
 --- TEST 19: OPENMP (8 Thread, guided, ciclo esterno) ---
 OMP_NUM_THREADS=8 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 outer 8 100 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 30.9514
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.309514
-Il tempo min e': 0.3041
-Il tempo max e': 0.318084
+Il tempo di esecuzione totale del calcolo dell'SMA e': 30.2677
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.302677
+Il tempo min e': 0.296957
+Il tempo max e': 0.317503
 Programma Finito!
 --- TEST 20: OPENMP (8 Thread, static, ciclo intern) ---
 OMP_NUM_THREADS=8 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 intern 8 25 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 94.1543
-Il tempo di esecuzione medio del calcolo dell'SMA e': 3.76617
-Il tempo min e': 3.71898
-Il tempo max e': 3.82743
+Il tempo di esecuzione totale del calcolo dell'SMA e': 92.4702
+Il tempo di esecuzione medio del calcolo dell'SMA e': 3.69881
+Il tempo min e': 3.64061
+Il tempo max e': 3.75632
 Programma Finito!
 --- TEST 21: OPENMP (8 Thread, dynamic, ciclo intern) ---
 OMP_NUM_THREADS=8 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 intern 8 25 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 621.453
-Il tempo di esecuzione medio del calcolo dell'SMA e': 24.8581
-Il tempo min e': 24.5919
-Il tempo max e': 25.3656
+Il tempo di esecuzione totale del calcolo dell'SMA e': 634.428
+Il tempo di esecuzione medio del calcolo dell'SMA e': 25.3771
+Il tempo min e': 25.1143
+Il tempo max e': 25.8483
 Programma Finito!
 --- TEST 22: OPENMP (8 Thread, guided, ciclo intern) ---
 OMP_NUM_THREADS=8 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 intern 8 25 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 329.444
-Il tempo di esecuzione medio del calcolo dell'SMA e': 13.1778
-Il tempo min e': 12.9617
-Il tempo max e': 13.7658
+Il tempo di esecuzione totale del calcolo dell'SMA e': 266.765
+Il tempo di esecuzione medio del calcolo dell'SMA e': 10.6706
+Il tempo min e': 10.5468
+Il tempo max e': 10.792
 Programma Finito!
 --- TEST 23: OPENMP (16 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=16 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 outer 16 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 23.6358
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.236358
-Il tempo min e': 0.194388
-Il tempo max e': 0.270463
+Il tempo di esecuzione totale del calcolo dell'SMA e': 21.9975
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.219975
+Il tempo min e': 0.186041
+Il tempo max e': 0.269297
 Programma Finito!
 --- TEST 24: OPENMP (16 Thread, dynamic, ciclo esterno) ---
 OMP_NUM_THREADS=16 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 outer 16 100 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 24.2272
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.242272
-Il tempo min e': 0.227908
-Il tempo max e': 0.276565
+Il tempo di esecuzione totale del calcolo dell'SMA e': 23.936
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.23936
+Il tempo min e': 0.226788
+Il tempo max e': 0.267059
 Programma Finito!
 --- TEST 25: OPENMP (16 Thread, guided, ciclo esterno) ---
 OMP_NUM_THREADS=16 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 outer 16 100 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 23.1236
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.231236
-Il tempo min e': 0.208749
-Il tempo max e': 0.268395
+Il tempo di esecuzione totale del calcolo dell'SMA e': 22.65
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.2265
+Il tempo min e': 0.203834
+Il tempo max e': 0.276088
 Programma Finito!
 #@echo "--- TEST 26: OPENMP (16 Thread, static, ciclo intern) ---"
 #OMP_NUM_THREADS=16 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 intern 16 1 1 static
@@ -213,189 +269,189 @@ Programma Finito!
 --- TEST 29: OPENMP (32 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=32 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 outer 32 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 22.989
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.22989
-Il tempo min e': 0.211696
-Il tempo max e': 0.252368
+Il tempo di esecuzione totale del calcolo dell'SMA e': 22.7711
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.227711
+Il tempo min e': 0.201904
+Il tempo max e': 0.249817
 Programma Finito!
 --- TEST 30: OPENMP (32 Thread, dynamic, ciclo esterno) ---
 OMP_NUM_THREADS=32 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 outer 32 100 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 23.4451
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.234451
-Il tempo min e': 0.222235
-Il tempo max e': 0.27881
+Il tempo di esecuzione totale del calcolo dell'SMA e': 22.8785
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.228785
+Il tempo min e': 0.217975
+Il tempo max e': 0.246084
 Programma Finito!
 --- TEST 31: OPENMP (32 Thread, guided, ciclo esterno) ---
 OMP_NUM_THREADS=32 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 outer 32 100 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 23.6182
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.236182
-Il tempo min e': 0.212458
-Il tempo max e': 0.292036
+Il tempo di esecuzione totale del calcolo dell'SMA e': 23.3453
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.233453
+Il tempo min e': 0.208749
+Il tempo max e': 0.261146
 Programma Finito!
 --- TEST 32: OPENMP (64 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=64 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 outer 64 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 22.4647
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.224647
-Il tempo min e': 0.212379
-Il tempo max e': 0.248603
+Il tempo di esecuzione totale del calcolo dell'SMA e': 22.3078
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.223078
+Il tempo min e': 0.208712
+Il tempo max e': 0.240175
 Programma Finito!
 --- TEST 33: OPENMP (64 Thread, dynamic, ciclo esterno) ---
 OMP_NUM_THREADS=64 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 outer 64 100 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 23.3242
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.233242
-Il tempo min e': 0.223244
-Il tempo max e': 0.279287
+Il tempo di esecuzione totale del calcolo dell'SMA e': 23.4275
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.234275
+Il tempo min e': 0.21685
+Il tempo max e': 0.261128
 Programma Finito!
 --- TEST 34: OPENMP (64 Thread, guided, ciclo esterno) ---
 OMP_NUM_THREADS=64 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 outer 64 100 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 22.6362
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.226362
-Il tempo min e': 0.211947
-Il tempo max e': 0.266607
+Il tempo di esecuzione totale del calcolo dell'SMA e': 22.154
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.22154
+Il tempo min e': 0.205252
+Il tempo max e': 0.256682
 Programma Finito!
 --- TEST 29: OPENMP (128 Thread, static, ciclo esterno) ---
 OMP_NUM_THREADS=128 OMP_SCHEDULE="static" ./Primo_Progetto 2097152 512 outer 128 100 1 static
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 22.2503
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.222503
-Il tempo min e': 0.208823
-Il tempo max e': 0.267666
+Il tempo di esecuzione totale del calcolo dell'SMA e': 21.5222
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.215222
+Il tempo min e': 0.204685
+Il tempo max e': 0.23934
 Programma Finito!
 --- TEST 30: OPENMP (128 Thread, dynamic, ciclo esterno) ---
 OMP_NUM_THREADS=128 OMP_SCHEDULE="dynamic" ./Primo_Progetto 2097152 512 outer 128 100 1 dynamic
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 23.5226
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.235226
-Il tempo min e': 0.223562
-Il tempo max e': 0.266325
+Il tempo di esecuzione totale del calcolo dell'SMA e': 23.0276
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.230276
+Il tempo min e': 0.221701
+Il tempo max e': 0.247539
 Programma Finito!
 --- TEST 31: OPENMP (128 Thread, guided, ciclo esterno) ---
 OMP_NUM_THREADS=128 OMP_SCHEDULE="guided" ./Primo_Progetto 2097152 512 outer 128 100 1 guided
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 22.1104
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.221104
-Il tempo min e': 0.209477
-Il tempo max e': 0.236637
+Il tempo di esecuzione totale del calcolo dell'SMA e': 22.1071
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.221071
+Il tempo min e': 0.204414
+Il tempo max e': 0.239049
 Programma Finito!
 --- TEST 32: CUDA (32 Thread per blocco) ---
 ./Primo_Progetto 2097152 512 CUDA 32 100 1 NA
 Numero: blocchi GPU: 65520
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 0.697456
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00697456
-Il tempo min e': 0.00681444
-Il tempo max e': 0.00747049
+Il tempo di esecuzione totale del calcolo dell'SMA e': 0.688255
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00688255
+Il tempo min e': 0.00676884
+Il tempo max e': 0.00746079
 Programma Finito!
 --- TEST 33: CUDA (64 Thread per blocco) ---
 ./Primo_Progetto 2097152 512 CUDA 64 100 1 NA
 Numero: blocchi GPU: 32760
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 0.692678
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00692678
-Il tempo min e': 0.00678663
-Il tempo max e': 0.00725909
+Il tempo di esecuzione totale del calcolo dell'SMA e': 0.687749
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00687749
+Il tempo min e': 0.00674266
+Il tempo max e': 0.00734931
 Programma Finito!
 --- TEST 34: CUDA (128 Thread per blocco) ---
 ./Primo_Progetto 2097152 512 CUDA 128 100 1 NA
 Numero: blocchi GPU: 16380
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 0.691119
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00691119
-Il tempo min e': 0.00677584
-Il tempo max e': 0.00761947
+Il tempo di esecuzione totale del calcolo dell'SMA e': 0.684794
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00684794
+Il tempo min e': 0.00672092
+Il tempo max e': 0.00709478
 Programma Finito!
 --- TEST 35: CUDA (256 Thread per blocco) ---
 ./Primo_Progetto 2097152 512 CUDA 256 100 1 NA
 Numero: blocchi GPU: 8190
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 0.687947
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00687947
-Il tempo min e': 0.00678741
-Il tempo max e': 0.00759747
+Il tempo di esecuzione totale del calcolo dell'SMA e': 0.682063
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00682063
+Il tempo min e': 0.00672305
+Il tempo max e': 0.00783657
 Programma Finito!
 --- TEST 36: CUDA (128 Thread per blocco) ---
 ./Primo_Progetto 2097152 512 CUDA 512 100 1 NA
 Numero: blocchi GPU: 4095
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 0.686449
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00686449
-Il tempo min e': 0.00676924
-Il tempo max e': 0.00711354
+Il tempo di esecuzione totale del calcolo dell'SMA e': 0.683104
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00683104
+Il tempo min e': 0.00670777
+Il tempo max e': 0.00717746
 Programma Finito!
 --- TEST 37: CUDA (1024 Thread per blocco) ---
 ./Primo_Progetto 2097152 512 CUDA 1024 100 1 NA
 Numero: blocchi GPU: 2048
 Num. di cicli per singolo test(senza REPS): 1075576320
-Il tempo di esecuzione totale del calcolo dell'SMA e': 0.698646
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00698646
-Il tempo min e': 0.00682165
-Il tempo max e': 0.00831303
+Il tempo di esecuzione totale del calcolo dell'SMA e': 0.686375
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.00686375
+Il tempo min e': 0.00675843
+Il tempo max e': 0.00738806
 Programma Finito!
 --- TEST 38: CUDA (32 Thread per blocco) ---
 ./Primo_Progetto 33554432 512 CUDA 32 100 1 NA
 Numero: blocchi GPU: 1048560
 Num. di cicli per singolo test(senza REPS): 17213160960
-Il tempo di esecuzione totale del calcolo dell'SMA e': 10.8646
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.108646
-Il tempo min e': 0.108479
-Il tempo max e': 0.109053
+Il tempo di esecuzione totale del calcolo dell'SMA e': 10.7653
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.107653
+Il tempo min e': 0.107433
+Il tempo max e': 0.108336
 Programma Finito!
 --- TEST 39: CUDA (64 Thread per blocco) ---
 ./Primo_Progetto 33554432 512 CUDA 64 100 1 NA
 Numero: blocchi GPU: 524280
 Num. di cicli per singolo test(senza REPS): 17213160960
-Il tempo di esecuzione totale del calcolo dell'SMA e': 10.8224
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.108224
-Il tempo min e': 0.10808
-Il tempo max e': 0.108651
+Il tempo di esecuzione totale del calcolo dell'SMA e': 10.7665
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.107665
+Il tempo min e': 0.107322
+Il tempo max e': 0.108586
 Programma Finito!
 --- TEST 40: CUDA (128 Thread per blocco) ---
 ./Primo_Progetto 33554432 512 CUDA 128 100 1 NA
 Numero: blocchi GPU: 262140
 Num. di cicli per singolo test(senza REPS): 17213160960
-Il tempo di esecuzione totale del calcolo dell'SMA e': 10.8201
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.108201
-Il tempo min e': 0.108029
-Il tempo max e': 0.108777
+Il tempo di esecuzione totale del calcolo dell'SMA e': 10.7614
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.107614
+Il tempo min e': 0.107438
+Il tempo max e': 0.108655
 Programma Finito!
 --- TEST 41: CUDA (256 Thread per blocco) ---
 ./Primo_Progetto 33554432 512 CUDA 256 100 1 NA
 Numero: blocchi GPU: 131070
 Num. di cicli per singolo test(senza REPS): 17213160960
-Il tempo di esecuzione totale del calcolo dell'SMA e': 10.8009
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.108009
-Il tempo min e': 0.107815
-Il tempo max e': 0.108635
+Il tempo di esecuzione totale del calcolo dell'SMA e': 10.7643
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.107643
+Il tempo min e': 0.107251
+Il tempo max e': 0.10826
 Programma Finito!
 --- TEST 42: CUDA (128 Thread per blocco) ---
 ./Primo_Progetto 33554432 512 CUDA 512 100 1 NA
 Numero: blocchi GPU: 65535
 Num. di cicli per singolo test(senza REPS): 17213160960
-Il tempo di esecuzione totale del calcolo dell'SMA e': 10.8046
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.108046
-Il tempo min e': 0.107768
-Il tempo max e': 0.108891
+Il tempo di esecuzione totale del calcolo dell'SMA e': 10.7329
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.107329
+Il tempo min e': 0.107142
+Il tempo max e': 0.108283
 Programma Finito!
 --- TEST 43: CUDA (1024 Thread per blocco) ---
 ./Primo_Progetto 33554432 512 CUDA 1024 100 1 NA
 Numero: blocchi GPU: 32768
 Num. di cicli per singolo test(senza REPS): 17213160960
-Il tempo di esecuzione totale del calcolo dell'SMA e': 10.8915
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.108915
-Il tempo min e': 0.108352
-Il tempo max e': 0.109336
+Il tempo di esecuzione totale del calcolo dell'SMA e': 10.7885
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.107885
+Il tempo min e': 0.107715
+Il tempo max e': 0.108656
 Programma Finito!
 CREAZIONE DATI: CUDA (32 Thread per blocco) ---
 ./Primo_Progetto 2097152 20 CUDA 32 100 0 NA
 Numero: blocchi GPU: 65536
 Num. di cicli per singolo test(senza REPS): 44039772
-Il tempo di esecuzione totale del calcolo dell'SMA e': 0.0451755
-Il tempo di esecuzione medio del calcolo dell'SMA e': 0.000451755
-Il tempo min e': 0.000395216
-Il tempo max e': 0.000929804
+Il tempo di esecuzione totale del calcolo dell'SMA e': 0.0445847
+Il tempo di esecuzione medio del calcolo dell'SMA e': 0.000445847
+Il tempo min e': 0.000377424
+Il tempo max e': 0.00358514
 Programma Finito!
