@@ -1,0 +1,116 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: \"Il mio Report\"\n",
+        "format: pdf\n",
+        "execute:\n",
+        "  echo: false\n",
+        "  warning: false\n",
+        "---"
+      ],
+      "id": "c2826050"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "import numpy as np"
+      ],
+      "id": "56c01bdc",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "# INTRODUZIONE AL PROGETTO\n",
+        "Il progetto volge a dimostrare la velocità della programmazione in parallelo rispetto ad una programmazione in serie.\n",
+        "\n",
+        "## COSA FA IL PROGRAMMA\n",
+        "### CREAZIONE DEI DATI\n",
+        "Il programma genera un segnale periodico con rumore \"bianco\" (all'interno del file **iniz.cpp**).\n",
+        " \n",
+        "```cpp\n",
+        "for(int i = 0; i < grand_vet; i++){\n",
+        "    vet[i] = (amp * sin(i/periodo)) + aggiunta_rumore(gen, amp);\n",
+        "}\n",
+        "```\n",
+        "\n",
+        "Per riproducibilità è stato fissato un seed di generazione, quindi il rumore sarà sempre lo stesso.\n",
+        "\n",
+        "```cpp \n",
+        "mt19937 gen(11);\n",
+        "```\n",
+        "\n",
+        "Nello specifico è stata usata una distribuzione uniforme dalla libreria random per creare il rumore (all'interno del file **iniz.cpp**).\n",
+        "\n",
+        "```cpp \n",
+        "double ampiezza_rumore = amp / 5.0;                                         \n",
+        "uniform_real_distribution<double> dist(-ampiezza_rumore, ampiezza_rumore);  \n",
+        "return dist(gen); \n",
+        "```\n",
+        "\n",
+        "### CALCOLO SMA\n",
+        "In seguito è stata calcolata una SMA(Simple Moving Avarage) che consiste nel fare la media degli ultimi tot numeri decisi dall'utente (il parmaetro all'interno del programma è **WINDOW**). Questo passo è quello che è stato parallelizzato, all'interno del file: **indicator.cppp** (per **OpenMP**) e **cuda.cu** (per **CUDA**).\n",
+        "Il risultato è un segnale con un rumore minore, ma con un offset rispetto a quello iniziale."
+      ],
+      "id": "13c7c682"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| echo: false\n",
+        "#| label: fig-segnale\n",
+        "#| fig-cap: Grafico generato dai dati CSV\n",
+        "\n",
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "\n",
+        "df = pd.read_csv(\"output.csv\", header=None)\n",
+        "df.columns = [\"x\", \"y\"]\n",
+        "\n",
+        "plt.figure(figsize=(7,4))\n",
+        "plt.plot(df[\"x\"], df[\"y\"], label=\"Segnale\")\n",
+        "plt.title(\"Grafico del segnale da CSV\")\n",
+        "plt.xlabel(\"X\")\n",
+        "plt.ylabel(\"Ampiezza\")\n",
+        "plt.legend()\n",
+        "plt.grid(True)\n",
+        "\n",
+        "plt.show()"
+      ],
+      "id": "fig-segnale",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "#### COSA SERVE UN SMA\n",
+        "Un ambito conosciuto è il trading, dove con l'aiuto di questo strumento si può diminuire il rumore dei mercati finanziari, aiutando la comprensione di questi.\n",
+        "\n",
+        "I\n"
+      ],
+      "id": "ae9af760"
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "python3",
+      "language": "python",
+      "display_name": "Python 3 (ipykernel)",
+      "path": "/home/thomas/.local/share/jupyter/kernels/python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
